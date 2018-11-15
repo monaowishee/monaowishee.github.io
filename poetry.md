@@ -1,6 +1,6 @@
 ---
 title: "Restaurant Data Analysis"
-layout: page
+layout: post
 permalink: /poetry/
 output:
   flexdashboard::flex_dashboard:
