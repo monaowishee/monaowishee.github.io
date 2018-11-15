@@ -1,15 +1,101 @@
 ---
+title: "Restaurant Data Analysis"
 layout: page
 permalink: /poetry/
-title: poetry
-description: Showcase your writing, short stories, or poems. Replace this text with your description.
+output:
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+    theme: bootstrap
+    css: _syntax-highlighting.scss
 ---
 
-<ul class="post-list">
-{% for poem in site.poetry reversed %}
-    <li>
-        <h2><a class="poem-title" href="{{ poem.url | prepend: site.baseurl }}">{{ poem.title }}</a></h2>
-        <p class="post-meta">{{ poem.date | date: '%B %-d, %Y — %H:%M' }}</p>
-      </li>
-{% endfor %}
-</ul>
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(include = FALSE)
+library(flexdashboard)
+library(tidyverse)
+library(leaflet)
+library(readxl)
+library(rworldmap)
+library(gridExtra)
+library(broom)
+
+
+#------LOAD FILES---------
+CCodesfile="Country-Code.xlsx"
+Zomatofile="zomato.xlsx"
+CurrencyFile="CurrencyRates.xlsx"
+
+CCodes=read_excel(CCodesfile) #importing country code file
+zomato=read_excel(Zomatofile) #importing main zomato file
+Currency=read_excel(CurrencyFile) #importing currency file
+
+#------ GET RID OF SOME COLUMNS & ADD NEW ONES -------------
+zomato1=zomato %>% select (-c(ID, Rating_Color,Switch_To_Order_Menu,Price_Range,Address,Locality_Verbose,Currency))
+#we remove currency column as it is incorrect and contains too many unique symbols
+
+#add in new columns: Country Names according to Country Code & proper currency names with conversion rates
+zomato2 = zomato1 %>% left_join(CCodes)
+zomato3 = zomato2 %>% left_join(Currency)
+
+zomato3 %>% select(Currency, Country) #checking to see if country matched up with new currency values
+
+#add in new column: USD Cost (for equal comparison)
+zomato4 = zomato3 %>% mutate(Avg_Cost_USD = Average_Cost_For_Two*`Conversion Rate (USD)`)
+#Multiplied Currency Column by it's conversion rate
+
+#replacing Cuisines col. with Principal_Cuisines (the first category of cuisines for every country row)
+zomato5= zomato4 %>% separate(Cuisines,into=c("Principal_Cuisines")) #store "primary" cuisine types into new column and replace old with this
+
+#we notice that there are several "0" rated stores for even expensive places so we decided to remove no rating stores
+zomato5 %>% count(Aggregate_Rating) # there are 2148 restaurants without any ratings
+
+zomato5[zomato5 == 0] = NA #remove values that have zero
+zomato5[zomato5 == "Not rated"] = NA #remove unrated values
+
+zomato6 = zomato5 %>% mutate(Transformed_Rating = log10(Aggregate_Rating/(5-Aggregate_Rating)))
+
+map.data = zomato6 %>% select(Country,Restaurant_Name,Longitude,Latitude)
+
+```
+
+Column {data-width=650}
+-----------------------------------------------------------------------
+
+### Average Cost (in $USD) vs. Average Rating
+
+```{r echo=TRUE}
+zomato5 = zomato5 %>% mutate(Rating_Factor=ordered(Rating_Text,levels=c("Excellent","Very Good","Good","Average","Poor")))
+
+ratingt.cost= ggplot(zomato5,aes(x=Rating_Factor,y=Avg_Cost_USD))+geom_boxplot() #general rating category
+ratingt.cost
+
+rating.cost= ggplot(zomato5,aes(x=factor(Aggregate_Rating),y=Avg_Cost_USD))+geom_boxplot() #more in-depth view on ratings (treating rating as factor)
+rating.cost
+
+rating.costplot= ggplot(zomato5,aes(x=(Aggregate_Rating),y=Avg_Cost_USD))+geom_point()
+rating.costplot
+
+
+```
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+### World Map Overview
+
+```{r echo=TRUE}
+newmap = getMap(resolution = "li")
+plot(newmap)
+worldmap = points(map.data$Longitude, map.data$Latitude, col = "red", cex = .6)
+```
+
+### Closer look at India
+
+```{r echo=FALSE}
+India=map.data %>% filter(Country=="India")
+indiamap = leaflet(India) %>% addTiles() %>%
+  addMarkers(clusterOptions = markerClusterOptions()) %>%
+  setView(78.9629,20,zoom=4)
+indiamap
+```
