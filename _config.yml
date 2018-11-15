@@ -2,29 +2,29 @@
 permalink:           pretty
 
 # Setup
-title:               Progress
-tagline:             A responsive blog theme that illustrates reading progress. Suited for continous reading.
-url:                 http://alexanderussell.github.io
+title:               Restaurant Data Analysis
+tagline:             A data analysis on 10 000 restaurants all over the world.
+url:                 http://monaowishee.github.io
 baseurl:             /progress-for-jekyll
 analytics_id:
 
 # Owner/author information
 owner:
-  name:           Alex Russell
+  name:           Mona Mujib and Owishee Islam
   avatar:         avatar.png
-  bio:            "Designer."
-  email:          alex@collectivelymade.com
-  twitter:        alexanderussell
-  github:         alexanderussell
-  instagram:      alexanderussell
-  dribbble:       alexanderussell
-  location:       "Lincoln, NE"
+  bio:            "UofT Students"
+  #email:          alex@collectivelymade.com
+  #twitter:        alexanderussell
+  github:         monaowishee
+  #instagram:      alexanderussell
+  #dribbble:       alexanderussell
+  #location:       "Lincoln, NE"
 
 
 # Custom vars
 version:             2.0.0
 github:
-  repo:              
+  repo:
 
 # Pagination
 paginate: 5
